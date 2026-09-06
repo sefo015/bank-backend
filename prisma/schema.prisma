@@ -1,0 +1,136 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id           Int       @id @default(autoincrement())
+  pinCode      String    @unique @map("pin_code")
+  idSerial     String    @map("id_serial")
+  idNumber     String    @unique @map("id_number")
+  firstName    String    @map("first_name")
+  lastName     String    @map("last_name")
+  birthDate    DateTime? @map("birth_date")
+  sex          Sex?
+  isActive     Boolean   @default(true) @map("is_active")
+  
+  email        String    @unique
+  password     String
+  role         Role      @default(USER)
+  balance      Float     @default(24500.00)
+  
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  incomes      Income[]
+  phones       PhoneNumber[]
+  credits      Credit[]
+  cards        Card[]
+  transactions Transaction[]
+
+  @@map("customers")
+}
+
+model Income {
+  id            Int      @id @default(autoincrement())
+  monthlyIncome Float    @map("monthly_income")
+  
+  customerId    Int      @map("customer_id")
+  customer      Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("customers_income")
+}
+
+model PhoneNumber {
+  id          Int      @id @default(autoincrement())
+  phoneNumber String   @map("phone_number")
+  
+  customerId  Int      @map("customer_id")
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("phone_numbers")
+}
+
+model Credit {
+  id             Int       @id @default(autoincrement())
+  amount         Float
+  interestRate   Float     @map("interest_rate")
+  termMonths     Int       @map("term_months")
+  monthlyPayment Float?    @map("monthly_payment")
+  currencyType   Currency  @default(AZN) @map("currency_type")
+  status         Int       @default(1)
+  startDate      DateTime? @map("start_date")
+  endDate        DateTime? @map("end_date")
+  isActive       Boolean   @default(true) @map("is_active")
+  
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  customerId     Int       @map("customer_id")
+  customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  schedules      PaymentSchedule[]
+
+  @@map("credits")
+}
+
+model PaymentSchedule {
+  id            Int       @id @default(autoincrement())
+  paymentDate   DateTime  @map("payment_date")
+  paymentAmount Float     @map("payment_amount")
+  status        Int       @default(1) 
+  paidDate      DateTime? @map("paid_date")
+
+  creditId      Int       @map("credit_id")
+  credit        Credit    @relation(fields: [creditId], references: [id], onDelete: Cascade)
+
+  @@map("payment_schedules")
+}
+ 
+model Card {
+  id         Int      @id @default(autoincrement())
+  cardNumber String   @unique
+  cardType   String   
+  status     Int      @default(1)
+  createdAt  DateTime @default(now())
+
+  customerId Int      @map("customer_id")
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model Transaction {
+  id         Int      @id @default(autoincrement())
+  title      String
+  amount     Float
+  type       String   
+  date       DateTime @default(now())
+
+  customerId Int      @map("customer_id")
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+enum Sex {
+  M
+  F
+}
+
+enum Currency {
+  AZN
+  USD
+  EUR
+}
+
+enum Role {
+  USER
+  WORKER
+}
