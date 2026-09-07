@@ -9,7 +9,7 @@ const workerRoutes = require('./routes/workerRoutes');
 const app = express();
 
 app.use(cors({
-    origin: '*',
+    origin: true,
     credentials: true
 }));
 
